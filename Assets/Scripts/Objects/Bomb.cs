@@ -1,39 +1,37 @@
-using UnityEngine;
+using System;
 using System.Collections;
+using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(FadeEffect))]
+[RequireComponent(typeof(Exploder))]
 public class Bomb : PoolableObject
 {
     [SerializeField] private float _minLifetime = 2f;
     [SerializeField] private float _maxLifetime = 5f;
 
-    private FadeController _fadeController;
+    public event Action<Bomb> Exploded;
+
+    private FadeEffect _fade;
     private Exploder _exploder;
 
     private void Awake()
     {
-        _fadeController = GetComponent<FadeController>();
-
-        if (_fadeController == null)
-            _fadeController = gameObject.AddComponent<FadeController>();
-
+        _fade = GetComponent<FadeEffect>();
         _exploder = GetComponent<Exploder>();
-
-        if (_exploder == null)
-            _exploder = gameObject.AddComponent<Exploder>();
     }
 
     public override void OnSpawn()
     {
         base.OnSpawn();
-        float lifetime = Random.Range(_minLifetime, _maxLifetime);
-        _fadeController.ResetAlpha();
-        _fadeController.StartFade(lifetime, OnFadeComplete);
+        float lifetime = UnityEngine.Random.Range(_minLifetime, _maxLifetime);
+        _fade.StartFade(lifetime, OnFadeComplete);
     }
 
     private void OnFadeComplete()
     {
         _exploder.Explode(transform.position);
-        SpawnerLocator.BombSpawner?.Despawn(this);
+        Exploded?.Invoke(this);
     }
 
     public override void OnDespawn()

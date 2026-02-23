@@ -1,22 +1,20 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class ObjectPool<T> where T : PoolableObject
 {
     private readonly T _prefab;
-
     private readonly Transform _parent;
+    private readonly Stack<T> _freeObjects;
 
-    private readonly Stack<T> _freeObjects = new Stack<T>();
-
-    public int TotalCreated { get; private set; }
-    public int ActiveCount { get; private set; }
-    public int SpawnCount { get; private set; }
+    public event Action<T> ObjectCreated;
 
     public ObjectPool(T prefab, Transform parent)
     {
         _prefab = prefab;
         _parent = parent;
+        _freeObjects = new Stack<T>();
     }
 
     public T Get(Vector3 position, Quaternion rotation)
@@ -31,12 +29,10 @@ public class ObjectPool<T> where T : PoolableObject
         }
         else
         {
-            obj = Object.Instantiate(_prefab, position, rotation, _parent);
-            TotalCreated++;
+            obj = UnityEngine.Object.Instantiate(_prefab, position, rotation, _parent);
+            ObjectCreated?.Invoke(obj);
         }
 
-        ActiveCount++;
-        SpawnCount++;
         obj.OnSpawn();
 
         return obj;
@@ -47,6 +43,5 @@ public class ObjectPool<T> where T : PoolableObject
         obj.OnDespawn();
         obj.gameObject.SetActive(false);
         _freeObjects.Push(obj);
-        ActiveCount--;
     }
 }

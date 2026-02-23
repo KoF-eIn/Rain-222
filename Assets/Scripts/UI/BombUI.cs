@@ -1,0 +1,1 @@
+public class BombUIDisplay : GenericUIDisplay<Bomb> { }
